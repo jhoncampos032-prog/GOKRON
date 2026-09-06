@@ -1,7 +1,7 @@
 // Cliente central de la API. Todas las páginas pasan por aquí,
 // así que cambiar la URL del backend o el manejo de auth se hace en un solo lugar.
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'https://gokron-backend.onrender.com/api';
 
 function getToken() {
   return localStorage.getItem('token');
