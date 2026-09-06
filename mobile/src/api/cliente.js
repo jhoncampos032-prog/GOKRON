@@ -2,7 +2,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Cambia esto por la URL real de tu backend desplegado antes de compilar para producción.
-const API_URL = 'http://192.168.1.169:4000/api';
+const API_URL = 'https://gokron-backend.onrender.com/api';
 
 const CLAVE_TOKEN = '@constructora/token';
 const CLAVE_USUARIO = '@constructora/usuario';
