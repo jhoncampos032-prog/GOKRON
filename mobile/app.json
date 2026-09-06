@@ -1,0 +1,31 @@
+{
+  "expo": {
+    "name": "Gokron",
+    "slug": "constructora-mobile",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#1C2321"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "infoPlistProperties": {
+        "NSLocationWhenInUseUsageDescription": "Usamos tu ubicación para registrar el check-in y check-out en la obra."
+      }
+    },
+    "android": {
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ],
+      "package": "com.constructoraapp.mobile"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "e529b644-7c26-41c4-8e85-0cf0ed6e29e0"
+      }
+    },
+    "owner": "kron278"
+  }
+}

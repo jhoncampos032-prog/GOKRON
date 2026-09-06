@@ -1,0 +1,201 @@
+// ============================================================
+// MODELO DE DATOS - Sistema de gestión digital para constructoras
+// Arquitectura multi-empresa: cada tabla lleva empresaId para
+// aislar los datos de cada cliente dentro del mismo sistema.
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Rol {
+  ADMIN
+  SUPERVISOR
+  TRABAJADOR
+}
+
+enum EstadoObra {
+  PLANIFICADA
+  EN_CURSO
+  PAUSADA
+  FINALIZADA
+}
+
+enum EstadoTarea {
+  PENDIENTE
+  EN_PROGRESO
+  COMPLETADA
+}
+
+enum TipoMovimiento {
+  ENTRADA
+  SALIDA
+}
+
+enum EstadoHerramienta {
+  DISPONIBLE
+  PRESTADA
+  MANTENIMIENTO
+  PERDIDA
+}
+
+model Empresa {
+  id            String   @id @default(uuid())
+  nombre        String
+  plan          String   @default("PILOTO") // PILOTO, BASICO, PRO
+  activo        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+
+  usuarios      Usuario[]
+  obras         Obra[]
+  materiales    Material[]
+  herramientas  Herramienta[]
+}
+
+model Usuario {
+  id            String   @id @default(uuid())
+  empresaId     String
+  empresa       Empresa  @relation(fields: [empresaId], references: [id])
+
+  nombre        String
+  email         String   @unique
+  passwordHash  String
+  rol           Rol      @default(TRABAJADOR)
+  activo        Boolean  @default(true)
+  fotoUrl       String?
+  createdAt     DateTime @default(now())
+
+  asistencias   Asistencia[]  @relation("AsistenciaTrabajador")
+  asistenciasComoEncargado Asistencia[] @relation("AsistenciaEncargado")
+  tareasAsignadas Tarea[] @relation("TareaAsignado")
+  prestamosHerramienta PrestamoHerramienta[]
+  movimientosMaterial MovimientoMaterial[]
+}
+
+model Obra {
+  id            String     @id @default(uuid())
+  empresaId     String
+  empresa       Empresa    @relation(fields: [empresaId], references: [id])
+
+  nombre        String
+  direccion     String?
+  latitud       Float?
+  longitud      Float?
+  estado        EstadoObra @default(PLANIFICADA)
+  fechaInicio   DateTime?
+  fechaFinEstimada DateTime?
+  createdAt     DateTime   @default(now())
+
+  asistencias   Asistencia[]
+  tareas        Tarea[]
+  movimientos   MovimientoMaterial[]
+  prestamosHerramienta PrestamoHerramienta[]
+}
+
+model Asistencia {
+  id            String    @id @default(uuid())
+  empresaId     String
+  usuarioId     String
+  obraId        String
+  encargadoId   String?
+
+  usuario       Usuario   @relation("AsistenciaTrabajador", fields: [usuarioId], references: [id])
+  obra          Obra      @relation(fields: [obraId], references: [id])
+  encargado     Usuario?  @relation("AsistenciaEncargado", fields: [encargadoId], references: [id])
+
+  checkIn       DateTime  @default(now())
+  checkOut      DateTime?
+  latCheckIn    Float?
+  lngCheckIn    Float?
+  latCheckOut   Float?
+  lngCheckOut   Float?
+  notaCheckIn   String?
+  notaCheckOut  String?
+}
+
+model Material {
+  id            String   @id @default(uuid())
+  empresaId     String
+  empresa       Empresa  @relation(fields: [empresaId], references: [id])
+
+  nombre        String
+  unidad        String   // ej: "sacos", "kg", "m3"
+  stockActual   Float    @default(0)
+  stockMinimo   Float    @default(0)
+  fotoUrl       String?
+
+  movimientos   MovimientoMaterial[]
+}
+
+model MovimientoMaterial {
+  id            String         @id @default(uuid())
+  empresaId     String
+  materialId    String
+  obraId        String
+  usuarioId     String
+
+  material      Material       @relation(fields: [materialId], references: [id])
+  obra          Obra           @relation(fields: [obraId], references: [id])
+  usuario       Usuario        @relation(fields: [usuarioId], references: [id])
+
+  tipo          TipoMovimiento
+  cantidad      Float
+  fecha         DateTime       @default(now())
+  nota          String?
+  fotoUrl       String?
+}
+
+model Tarea {
+  id             String      @id @default(uuid())
+  empresaId      String
+  obraId         String
+  asignadoId     String?
+
+  obra           Obra        @relation(fields: [obraId], references: [id])
+  asignado       Usuario?    @relation("TareaAsignado", fields: [asignadoId], references: [id])
+
+  titulo         String
+  descripcion    String?
+  estado         EstadoTarea @default(PENDIENTE)
+  fechaLimite    DateTime?
+  fotoEvidenciaUrl String?
+  createdAt      DateTime    @default(now())
+}
+
+model Herramienta {
+  id            String            @id @default(uuid())
+  empresaId     String
+  empresa       Empresa           @relation(fields: [empresaId], references: [id])
+
+  nombre        String
+  codigo        String?           // código o número de serie interno, opcional
+  fotoUrl       String?
+  estado        EstadoHerramienta @default(DISPONIBLE)
+  createdAt     DateTime          @default(now())
+
+  prestamos     PrestamoHerramienta[]
+}
+
+model PrestamoHerramienta {
+  id              String       @id @default(uuid())
+  empresaId       String
+  herramientaId   String
+  usuarioId       String?
+  obraId          String?
+
+  herramienta     Herramienta  @relation(fields: [herramientaId], references: [id])
+  usuario         Usuario?     @relation(fields: [usuarioId], references: [id])
+  obra            Obra?        @relation(fields: [obraId], references: [id])
+
+  fechaPrestamo   DateTime     @default(now())
+  fechaDevolucion DateTime?    // null mientras la herramienta sigue prestada
+  notaPrestamo    String?
+  notaDevolucion  String?
+  fotoPrestamoUrl String?
+  fotoDevolucionUrl String?
+}
