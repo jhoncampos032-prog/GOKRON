@@ -56,6 +56,21 @@ export const api = {
   devolverHerramienta: (id, payload) => request(`/herramientas/${id}/devolver`, { method: 'POST', body: payload }),
   historialHerramienta: (id) => request(`/herramientas/${id}/historial`),
   actualizarFotoHerramienta: (id, fotoUrl) => request(`/herramientas/${id}/foto`, { method: 'PATCH', body: { fotoUrl } }),
+
+  obtenerReporte: (periodo) => request(`/reportes?periodo=${periodo}`),
+  guardarFrecuenciaReporte: (frecuencia) => request('/reportes/frecuencia', { method: 'PATCH', body: { frecuencia } }),
+  descargarReporteExcel: async (periodo) => {
+    const token = getToken();
+    const res = await fetch(`${API_URL}/reportes/exportar?periodo=${periodo}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error('No se pudo generar el archivo');
+    return res.blob();
+  },
+
+  estadoGoogleDrive: () => request('/auth/google-drive/estado'),
+  conectarGoogleDrive: () => request('/auth/google-drive/conectar'),
+  actualizarDriveAhora: (periodo) => request('/auth/google-drive/actualizar-ahora', { method: 'POST', body: { periodo } }),
 };
 
 export { getToken };

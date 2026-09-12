@@ -49,6 +49,9 @@ model Empresa {
   nombre        String
   plan          String   @default("PILOTO") // PILOTO, BASICO, PRO
   activo        Boolean  @default(true)
+  frecuenciaReporte String @default("SEMANAL")
+  googleDriveRefreshToken String?
+  googleDriveConectado    Boolean @default(false)
   createdAt     DateTime @default(now())
 
   usuarios      Usuario[]
