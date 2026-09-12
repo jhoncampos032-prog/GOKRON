@@ -24,6 +24,8 @@ app.use('/api/materiales', materialesRoutes);
 app.use('/api/tareas', tareasRoutes);
 app.use('/api/usuarios', usuariosRoutes);
 app.use('/api/herramientas', herramientasRoutes);
+app.use('/api/reportes', require('./routes/reportes.routes'));
+app.use('/api/auth/google-drive', require('./routes/googleDrive.routes'));
 
 // Manejo de errores no capturados
 app.use((err, req, res, next) => {
