@@ -32,47 +32,51 @@ function inicioDelPeriodo(periodo) {
 
 const ETIQUETA_PERIODO = { dia: 'Hoy', semana: 'Esta semana', mes: 'Este mes' };
 
+// Consultas secuenciales (no Promise.all) a propósito: el plan gratis de
+// Supabase limita el pool a 15 conexiones en total, compartidas entre este
+// backend local y el de producción. Disparar 8 consultas en paralelo por
+// cada carga de este reporte agotaba ese pool y tumbaba el servidor entero.
+// Una a la vez usa como máximo 1-2 conexiones, a costa de ser un poco más
+// lento.
 async function obtenerDatosCompletos(empresaId, periodo) {
   const desde = inicioDelPeriodo(periodo);
 
-  const [empresa, asistencias, movimientos, tareas, herramientas, prestamos, personal, obras] = await Promise.all([
-    prisma.empresa.findUnique({ where: { id: empresaId } }),
-    prisma.asistencia.findMany({
-      where: { empresaId, checkIn: { gte: desde } },
-      include: { usuario: { select: { nombre: true } }, obra: { select: { nombre: true } } },
-      orderBy: { checkIn: 'desc' },
-    }),
-    prisma.movimientoMaterial.findMany({
-      where: { empresaId, fecha: { gte: desde } },
-      include: {
-        material: { select: { nombre: true, unidad: true } },
-        usuario: { select: { nombre: true } },
-        obra: { select: { nombre: true } },
-      },
-      orderBy: { fecha: 'desc' },
-    }),
-    prisma.tarea.findMany({
-      where: { empresaId },
-      include: { obra: { select: { nombre: true } }, asignado: { select: { nombre: true } } },
-      orderBy: { createdAt: 'desc' },
-    }),
-    prisma.herramienta.findMany({ where: { empresaId } }),
-    prisma.prestamoHerramienta.findMany({
-      where: { empresaId, fechaPrestamo: { gte: desde } },
-      include: { herramienta: { select: { nombre: true } }, usuario: { select: { nombre: true } }, obra: { select: { nombre: true } } },
-      orderBy: { fechaPrestamo: 'desc' },
-    }),
-    prisma.usuario.findMany({
-      where: { empresaId },
-      select: { nombre: true, email: true, rol: true, activo: true, createdAt: true },
-      orderBy: { nombre: 'asc' },
-    }),
-    prisma.obra.findMany({
-      where: { empresaId },
-      select: { nombre: true, direccion: true, estado: true, fechaInicio: true },
-      orderBy: { nombre: 'asc' },
-    }),
-  ]);
+  const empresa = await prisma.empresa.findUnique({ where: { id: empresaId } });
+  const asistencias = await prisma.asistencia.findMany({
+    where: { empresaId, checkIn: { gte: desde } },
+    include: { usuario: { select: { nombre: true } }, obra: { select: { nombre: true } } },
+    orderBy: { checkIn: 'desc' },
+  });
+  const movimientos = await prisma.movimientoMaterial.findMany({
+    where: { empresaId, fecha: { gte: desde } },
+    include: {
+      material: { select: { nombre: true, unidad: true } },
+      usuario: { select: { nombre: true } },
+      obra: { select: { nombre: true } },
+    },
+    orderBy: { fecha: 'desc' },
+  });
+  const tareas = await prisma.tarea.findMany({
+    where: { empresaId },
+    include: { obra: { select: { nombre: true } }, asignado: { select: { nombre: true } } },
+    orderBy: { createdAt: 'desc' },
+  });
+  const herramientas = await prisma.herramienta.findMany({ where: { empresaId } });
+  const prestamos = await prisma.prestamoHerramienta.findMany({
+    where: { empresaId, fechaPrestamo: { gte: desde } },
+    include: { herramienta: { select: { nombre: true } }, usuario: { select: { nombre: true } }, obra: { select: { nombre: true } } },
+    orderBy: { fechaPrestamo: 'desc' },
+  });
+  const personal = await prisma.usuario.findMany({
+    where: { empresaId },
+    select: { nombre: true, email: true, rol: true, activo: true, createdAt: true },
+    orderBy: { nombre: 'asc' },
+  });
+  const obras = await prisma.obra.findMany({
+    where: { empresaId },
+    select: { nombre: true, direccion: true, estado: true, fechaInicio: true },
+    orderBy: { nombre: 'asc' },
+  });
 
   return { empresa, desde, asistencias, movimientos, tareas, herramientas, prestamos, personal, obras };
 }
