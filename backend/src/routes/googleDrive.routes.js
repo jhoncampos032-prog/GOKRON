@@ -20,6 +20,9 @@ function crearClienteOAuth() {
 // en el "state" para saber, cuando Google nos devuelva la respuesta, a
 // cuál empresa pertenece esta autorización.
 router.get('/conectar', autenticar, (req, res) => {
+  // TEMPORAL: diagnóstico de invalid_client. Quitar después de confirmar.
+  console.log('Longitud del Client ID:', process.env.GOOGLE_CLIENT_ID?.length);
+  console.log('Client ID empieza con:', process.env.GOOGLE_CLIENT_ID?.substring(0, 10));
   const cliente = crearClienteOAuth();
   const url = cliente.generateAuthUrl({
     access_type: 'offline', // necesario para recibir un refresh_token reutilizable
