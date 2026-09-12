@@ -44,7 +44,18 @@ router.get('/callback', async (req, res) => {
 
   try {
     const cliente = crearClienteOAuth();
-    const { tokens } = await cliente.getToken(code);
+
+    // TEMPORAL: diagnóstico de invalid_client. Quitar después de confirmar.
+    console.log('Longitud del Client Secret:', process.env.GOOGLE_CLIENT_SECRET?.length);
+    console.log('Client Secret empieza con:', process.env.GOOGLE_CLIENT_SECRET?.substring(0, 8));
+
+    let tokens;
+    try {
+      ({ tokens } = await cliente.getToken(code));
+    } catch (err) {
+      console.log('ERROR DETALLADO DE GOOGLE:', JSON.stringify(err.response?.data || err.message));
+      throw err;
+    }
 
     if (!tokens.refresh_token) {
       // Esto pasa si la empresa ya había autorizado antes y Google no
