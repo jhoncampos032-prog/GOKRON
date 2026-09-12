@@ -20,10 +20,6 @@ function crearClienteOAuth() {
 // en el "state" para saber, cuando Google nos devuelva la respuesta, a
 // cuál empresa pertenece esta autorización.
 router.get('/conectar', autenticar, (req, res) => {
-  // TEMPORAL: diagnóstico de invalid_client. Quitar después de confirmar.
-  console.log('Longitud del Client ID:', process.env.GOOGLE_CLIENT_ID?.length);
-  console.log('Client ID empieza con:', process.env.GOOGLE_CLIENT_ID?.substring(0, 10));
-  console.log('Client ID termina en:', process.env.GOOGLE_CLIENT_ID?.slice(-15));
   const cliente = crearClienteOAuth();
   const url = cliente.generateAuthUrl({
     access_type: 'offline', // necesario para recibir un refresh_token reutilizable
@@ -45,18 +41,7 @@ router.get('/callback', async (req, res) => {
 
   try {
     const cliente = crearClienteOAuth();
-
-    // TEMPORAL: diagnóstico de invalid_client. Quitar después de confirmar.
-    console.log('Longitud del Client Secret:', process.env.GOOGLE_CLIENT_SECRET?.length);
-    console.log('Client Secret empieza con:', process.env.GOOGLE_CLIENT_SECRET?.substring(0, 8));
-
-    let tokens;
-    try {
-      ({ tokens } = await cliente.getToken(code));
-    } catch (err) {
-      console.log('ERROR DETALLADO DE GOOGLE:', JSON.stringify(err.response?.data || err.message));
-      throw err;
-    }
+    const { tokens } = await cliente.getToken(code);
 
     if (!tokens.refresh_token) {
       // Esto pasa si la empresa ya había autorizado antes y Google no
@@ -115,16 +100,25 @@ async function subirReporteADrive(empresaId, periodo) {
     fields: 'files(id)',
   });
 
-  const media = { mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', body: Readable.from(buffer) };
+  const MIME_XLSX = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+  const media = { mimeType: MIME_XLSX, body: Readable.from(buffer) };
 
-  if (existentes.data.files.length > 0) {
-    await drive.files.update({ fileId: existentes.data.files[0].id, media });
-  } else {
-    await drive.files.create({
-      requestBody: { name: nombreArchivo },
-      media,
-    });
+  // Si ya existe un archivo con este nombre, lo borramos y creamos uno
+  // nuevo limpio, en vez de "actualizarlo" — porque si ese archivo viejo
+  // ya se habia guardado convertido a Google Sheets (perdiendo el diseño),
+  // actualizarlo lo volveria a convertir otra vez, sin arreglar nada.
+  for (const archivoViejo of existentes.data.files) {
+    await drive.files.delete({ fileId: archivoViejo.id });
   }
+
+  await drive.files.create({
+    // mimeType explícito en los metadatos (no solo en "media") para que
+    // Drive guarde el archivo tal cual, como Excel real, y NO lo
+    // convierta a su formato nativo de Google Sheets — esa conversión es
+    // la que estaba perdiendo los colores y el diseño del reporte.
+    requestBody: { name: nombreArchivo, mimeType: MIME_XLSX },
+    media,
+  });
 
   return { subido: true };
 }
