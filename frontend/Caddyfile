@@ -1,0 +1,15 @@
+# DOMINIO=midominio.com  -> Caddy consigue y renueva el certificado HTTPS solo.
+# DOMINIO=:80            -> solo HTTP (para probar con la IP, sin dominio).
+{$DOMINIO::80} {
+	encode gzip
+
+	handle /api/* {
+		reverse_proxy backend:4000
+	}
+
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+}
