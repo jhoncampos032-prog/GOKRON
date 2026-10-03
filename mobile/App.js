@@ -11,6 +11,7 @@ import TareasScreen from './src/screens/TareasScreen';
 import TimeCardScreen from './src/screens/TimeCardScreen';
 import MaterialesScreen from './src/screens/MaterialesScreen';
 import HerramientasScreen from './src/screens/HerramientasScreen';
+import RadioScreen from './src/screens/RadioScreen';
 import MenuLateral from './src/components/MenuLateral';
 import { colores, espaciado } from './src/theme';
 
@@ -23,6 +24,7 @@ const PANTALLAS = {
   Materiales: MaterialesScreen,
   Herramientas: HerramientasScreen,
   Tareas: TareasScreen,
+  Radio: RadioScreen,
 };
 
 const TITULOS = {
@@ -60,6 +62,7 @@ function Navegacion() {
     Materiales: t('menuMateriales'),
     Herramientas: t('menuHerramientas'),
     Tareas: t('menuTareas'),
+    Radio: t('radioTitulo'),
   };
 
   const PantallaActual = PANTALLAS[pantallaActiva] || HomeScreen;

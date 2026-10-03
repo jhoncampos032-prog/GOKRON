@@ -1,8 +1,7 @@
-
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Cambia esto por la URL real de tu backend desplegado antes de compilar para producción.
-const API_URL = 'http://192.168.1.169:4000/api';
+const API_URL = 'https://gokron-backend.onrender.com/api';
 
 const CLAVE_TOKEN = '@constructora/token';
 const CLAVE_USUARIO = '@constructora/usuario';
@@ -88,6 +87,7 @@ async function peticionConRespaldo(path, opciones) {
 
 export const api = {
   login: (email, password) => peticion('/auth/login', { method: 'POST', body: { email, password } }),
+  olvidePassword: (email) => peticion('/auth/olvide-password', { method: 'POST', body: { email } }),
 
   listarObras: (token) => peticion('/obras', { token }),
   guardarUbicacionObra: (token, obraId, lat, lng) =>
@@ -122,4 +122,11 @@ export const api = {
   listarMateriales: (token) => peticion('/materiales', { token }),
   registrarMovimiento: (token, materialId, payload) =>
     peticionConRespaldo(`/materiales/${materialId}/movimiento`, { method: 'POST', body: payload, token }),
+
+  // Radio walkie-talkie: pide un permiso (token) de audio para un canal de
+  // obra o para una llamada directa con otra persona.
+  obtenerCanalObra: (token, obraId) =>
+    peticion('/radio/canal-obra', { method: 'POST', body: { obraId }, token }),
+  obtenerCanalDirecto: (token, otroUsuarioId) =>
+    peticion('/radio/canal-directo', { method: 'POST', body: { otroUsuarioId }, token }),
 };
