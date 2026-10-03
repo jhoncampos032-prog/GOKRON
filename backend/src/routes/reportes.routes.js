@@ -30,6 +30,24 @@ function inicioDelPeriodo(periodo) {
   return lunes;
 }
 
+// El período anterior equivalente (ayer, la semana pasada, el mes pasado),
+// para poder mostrar una tendencia (▲/▼) en el panel -- termina justo donde
+// empieza el período actual.
+function inicioDelPeriodoAnterior(periodo) {
+  const inicioAnterior = new Date(inicioDelPeriodo(periodo));
+  if (periodo === 'dia') inicioAnterior.setDate(inicioAnterior.getDate() - 1);
+  else if (periodo === 'mes') inicioAnterior.setMonth(inicioAnterior.getMonth() - 1);
+  else inicioAnterior.setDate(inicioAnterior.getDate() - 7);
+  return inicioAnterior;
+}
+
+// null cuando no hay base contra la cual comparar (evita un "+Infinity%" o
+// un porcentaje inventado cuando el período anterior estaba en cero).
+function variacionPorcentual(actual, anterior) {
+  if (!anterior) return null;
+  return Math.round(((actual - anterior) / anterior) * 100);
+}
+
 const ETIQUETA_PERIODO = { dia: 'Hoy', semana: 'Esta semana', mes: 'Este mes' };
 
 // Consultas secuenciales (no Promise.all) a propósito: el plan gratis de
@@ -94,12 +112,49 @@ router.get('/', async (req, res) => {
     const entradasMaterial = movimientos.filter((m) => m.tipo === 'ENTRADA').reduce((t, m) => t + m.cantidad, 0);
     const salidasMaterial = movimientos.filter((m) => m.tipo === 'SALIDA').reduce((t, m) => t + m.cantidad, 0);
 
+    // Período anterior equivalente, solo para asistencia y materiales -- son
+    // las únicas métricas de arriba que ya se filtran por rango de fecha en
+    // el período actual, así que comparten el mismo significado en el
+    // período previo. Tareas completadas es un conteo acumulado (no hay
+    // fecha de cuándo se completó) y herramientas prestadas es una foto del
+    // estado actual, no algo que se pueda reconstruir hacia atrás -- para
+    // esas dos no hay una tendencia real que mostrar.
+    const desdeAnterior = inicioDelPeriodoAnterior(periodo);
+    const asistenciasAnterior = await prisma.asistencia.findMany({
+      where: { empresaId: req.user.empresaId, checkIn: { gte: desdeAnterior, lt: desde } },
+      select: { checkIn: true, checkOut: true },
+    });
+    const movimientosAnterior = await prisma.movimientoMaterial.findMany({
+      where: { empresaId: req.user.empresaId, fecha: { gte: desdeAnterior, lt: desde } },
+      select: { tipo: true, cantidad: true },
+    });
+
+    const horasTrabajadasAnterior = asistenciasAnterior.reduce((total, a) => {
+      if (!a.checkOut) return total;
+      return total + (new Date(a.checkOut) - new Date(a.checkIn)) / (1000 * 60 * 60);
+    }, 0);
+    const entradasMaterialAnterior = movimientosAnterior.filter((m) => m.tipo === 'ENTRADA').reduce((t, m) => t + m.cantidad, 0);
+    const salidasMaterialAnterior = movimientosAnterior.filter((m) => m.tipo === 'SALIDA').reduce((t, m) => t + m.cantidad, 0);
+
+    const prestadas = herramientas.filter((h) => h.estado === 'PRESTADA').length;
+    const disponibles = herramientas.filter((h) => h.estado === 'DISPONIBLE').length;
+
     res.json({
       periodo,
       desde,
       hasta: new Date(),
-      asistencia: { totalMarcaciones: asistencias.length, horasTrabajadas: Math.round(horasTrabajadas * 10) / 10 },
-      materiales: { entradas: entradasMaterial, salidas: salidasMaterial },
+      asistencia: {
+        totalMarcaciones: asistencias.length,
+        horasTrabajadas: Math.round(horasTrabajadas * 10) / 10,
+        variacionMarcaciones: variacionPorcentual(asistencias.length, asistenciasAnterior.length),
+        variacionHoras: variacionPorcentual(horasTrabajadas, horasTrabajadasAnterior),
+      },
+      materiales: {
+        entradas: entradasMaterial,
+        salidas: salidasMaterial,
+        variacionEntradas: variacionPorcentual(entradasMaterial, entradasMaterialAnterior),
+        variacionSalidas: variacionPorcentual(salidasMaterial, salidasMaterialAnterior),
+      },
       tareas: {
         pendientes: tareas.filter((t) => t.estado === 'PENDIENTE').length,
         enProgreso: tareas.filter((t) => t.estado === 'EN_PROGRESO').length,
@@ -107,7 +162,9 @@ router.get('/', async (req, res) => {
       },
       herramientas: {
         totalCatalogo: herramientas.length,
-        prestadasAhora: herramientas.filter((h) => h.estado === 'PRESTADA').length,
+        prestadasAhora: prestadas,
+        disponibles,
+        otro: herramientas.length - prestadas - disponibles,
         entregasEnPeriodo: prestamos.length,
         devolucionesEnPeriodo: prestamos.filter((p) => p.fechaDevolucion).length,
       },

@@ -24,6 +24,8 @@ app.use('/api/materiales', materialesRoutes);
 app.use('/api/tareas', tareasRoutes);
 app.use('/api/usuarios', usuariosRoutes);
 app.use('/api/herramientas', herramientasRoutes);
+app.use('/api/empresa', require('./routes/empresa.routes'));
+app.use('/api/radio', require('./routes/radio.routes'));
 app.use('/api/reportes', require('./routes/reportes.routes'));
 app.use('/api/auth/google-drive', require('./routes/googleDrive.routes'));
 

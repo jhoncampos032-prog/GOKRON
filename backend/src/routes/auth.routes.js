@@ -1,7 +1,9 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const prisma = require('../lib/prisma');
+const { enviarCorreoRecuperacion } = require('../lib/correo');
 
 const router = express.Router();
 
@@ -85,6 +87,73 @@ router.post('/login', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al iniciar sesión' });
+  }
+});
+
+// Paso 1: el usuario pide recuperar su contraseña con solo su correo.
+// Siempre responde igual (haya o no una cuenta con ese correo) para no
+// revelar qué correos están registrados en el sistema.
+router.post('/olvide-password', async (req, res) => {
+  const { email } = req.body;
+  const mensaje = { ok: true, mensaje: 'Si ese correo está registrado, te enviamos un enlace para recuperar tu contraseña.' };
+
+  if (!email) return res.status(400).json({ error: 'Falta el correo' });
+
+  try {
+    const usuario = await prisma.usuario.findUnique({ where: { email } });
+    if (!usuario || !usuario.activo) {
+      return res.json(mensaje); // mismo mensaje, no delatamos si el correo existe o no
+    }
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const resetTokenExpira = new Date(Date.now() + 60 * 60 * 1000); // 1 hora
+
+    await prisma.usuario.update({
+      where: { id: usuario.id },
+      data: { resetToken: token, resetTokenExpira },
+    });
+
+    const enlace = `${process.env.FRONTEND_URL}/restablecer-password?token=${token}`;
+    await enviarCorreoRecuperacion(usuario.email, usuario.nombre, enlace);
+
+    res.json(mensaje);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'No se pudo procesar la solicitud' });
+  }
+});
+
+// Paso 2: el usuario llega desde el enlace del correo con el token, y manda
+// su contraseña nueva.
+router.post('/restablecer-password', async (req, res) => {
+  const { token, passwordNueva } = req.body;
+
+  if (!token || !passwordNueva) {
+    return res.status(400).json({ error: 'Faltan datos' });
+  }
+  if (passwordNueva.length < 6) {
+    return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres' });
+  }
+
+  try {
+    const usuario = await prisma.usuario.findFirst({
+      where: { resetToken: token, resetTokenExpira: { gt: new Date() } },
+    });
+
+    if (!usuario) {
+      return res.status(400).json({ error: 'El enlace no es válido o ya venció. Pide uno nuevo.' });
+    }
+
+    const passwordHash = await bcrypt.hash(passwordNueva, 10);
+    await prisma.usuario.update({
+      where: { id: usuario.id },
+      data: { passwordHash, resetToken: null, resetTokenExpira: null },
+    });
+
+    res.json({ ok: true, mensaje: 'Tu contraseña se actualizó. Ya puedes iniciar sesión.' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'No se pudo actualizar la contraseña' });
   }
 });
 
