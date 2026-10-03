@@ -8,8 +8,11 @@ import Asistencia from './Asistencia.jsx';
 import Materiales from './Materiales.jsx';
 import Herramientas from './Herramientas.jsx';
 import Tareas from './Tareas.jsx';
+import Reportes from './Reportes.jsx';
+import Empresa from './Empresa.jsx';
 
 const titulos = {
+  '/empresa': 'Datos de la empresa',
   '/': 'Resumen general',
   '/obras': 'Obras',
   '/personal': 'Personal',
@@ -17,9 +20,10 @@ const titulos = {
   '/materiales': 'Materiales',
   '/herramientas': 'Herramientas',
   '/tareas': 'Tareas y avance de obra',
+  '/reportes': 'Reportes',
 };
 
-export default function Dashboard({ usuario, onSalir }) {
+export default function Dashboard({ usuario, onSalir, onEmpresaActualizada }) {
   const ubicacion = useLocation();
   const navegar = useNavigate();
   const titulo = titulos[ubicacion.pathname] || 'Gokron';
@@ -59,6 +63,8 @@ export default function Dashboard({ usuario, onSalir }) {
             <Route path="/materiales" element={<Materiales />} />
             <Route path="/herramientas" element={<Herramientas />} />
             <Route path="/tareas" element={<Tareas />} />
+            <Route path="/reportes" element={<Reportes />} />
+            <Route path="/empresa" element={<Empresa usuario={usuario} onEmpresaActualizada={onEmpresaActualizada} />} />
           </Routes>
         </div>
       </div>

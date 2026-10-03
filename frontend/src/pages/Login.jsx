@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api.js';
+import Logo from '../components/Logo.jsx';
 
 export default function Login({ onLogin }) {
   const [email, setEmail] = useState('');
@@ -29,7 +30,7 @@ export default function Login({ onLogin }) {
       <div className="franja-precaucion" />
       <div className="login-centro">
         <div className="login-tarjeta">
-          <div className="login-marca">Gokron</div>
+          <div className="login-marca"><Logo altura={22} variante="oscuro" />Gokron</div>
           <h1 className="login-titulo">Inicia sesión</h1>
 
           {error && <div className="error-texto">{error}</div>}
@@ -60,7 +61,10 @@ export default function Login({ onLogin }) {
             </button>
           </form>
 
-          <p style={{ marginTop: 18, fontSize: 13, textAlign: 'center' }}>
+          <p style={{ marginTop: 14, fontSize: 13, textAlign: 'center' }}>
+            <Link to="/olvide-password" style={{ color: 'var(--acero)' }}>¿Olvidaste tu contraseña?</Link>
+          </p>
+          <p style={{ marginTop: 10, fontSize: 13, textAlign: 'center' }}>
             <Link to="/registro" style={{ color: 'var(--acero)' }}>¿Primera vez? Registra tu empresa</Link>
           </p>
         </div>
