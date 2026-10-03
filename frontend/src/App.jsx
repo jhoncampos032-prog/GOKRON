@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login.jsx';
 import RegistroEmpresa from './pages/RegistroEmpresa.jsx';
+import OlvidePassword from './pages/OlvidePassword.jsx';
+import RestablecerPassword from './pages/RestablecerPassword.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import Terminos from './pages/Terminos.jsx';
 import Privacidad from './pages/Privacidad.jsx';
@@ -14,6 +16,14 @@ export default function App() {
 
   function manejarLogin(usuarioLogueado) {
     setUsuario(usuarioLogueado);
+  }
+
+  function manejarEmpresaActualizada(nombre) {
+    setUsuario((actual) => {
+      const nuevo = { ...actual, empresaNombre: nombre };
+      localStorage.setItem('usuario', JSON.stringify(nuevo));
+      return nuevo;
+    });
   }
 
   function manejarSalida() {
@@ -32,13 +42,21 @@ export default function App() {
         path="/registro"
         element={usuario ? <Navigate to="/" /> : <RegistroEmpresa />}
       />
+      <Route
+        path="/olvide-password"
+        element={usuario ? <Navigate to="/" /> : <OlvidePassword />}
+      />
+      <Route
+        path="/restablecer-password"
+        element={usuario ? <Navigate to="/" /> : <RestablecerPassword />}
+      />
       <Route path="/terminos" element={<Terminos />} />
       <Route path="/privacidad" element={<Privacidad />} />
       <Route
         path="/*"
         element={
           usuario ? (
-            <Dashboard usuario={usuario} onSalir={manejarSalida} />
+            <Dashboard usuario={usuario} onSalir={manejarSalida} onEmpresaActualizada={manejarEmpresaActualizada} />
           ) : (
             <Navigate to="/login" />
           )

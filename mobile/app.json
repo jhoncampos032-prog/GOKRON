@@ -5,21 +5,31 @@
     "version": "0.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
     "splash": {
-      "backgroundColor": "#1C2321"
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#131321"
     },
     "ios": {
       "supportsTablet": false,
-      "infoPlistProperties": {
-        "NSLocationWhenInUseUsageDescription": "Usamos tu ubicación para registrar el check-in y check-out en la obra."
+      "bundleIdentifier": "com.constructoraapp.mobile",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Usamos tu ubicación para registrar el check-in y check-out en la obra.",
+        "NSMicrophoneUsageDescription": "Necesitamos tu micrófono para el radio walkie-talkie."
       }
     },
     "android": {
       "permissions": [
         "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION"
+        "ACCESS_COARSE_LOCATION",
+        "RECORD_AUDIO"
       ],
-      "package": "com.constructoraapp.mobile"
+      "package": "com.constructoraapp.mobile",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#131321"
+      }
     },
     "extra": {
       "eas": {

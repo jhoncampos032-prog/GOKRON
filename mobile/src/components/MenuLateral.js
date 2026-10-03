@@ -158,6 +158,7 @@ export default function MenuLateral({ visible, onCerrar, pantallaActiva, onSelec
     { clave: 'Materiales', etiqueta: t('menuMateriales'), icono: 'cube' },
     { clave: 'Herramientas', etiqueta: t('menuHerramientas'), icono: 'hammer' },
     { clave: 'Tareas', etiqueta: t('menuTareas'), icono: 'clipboard' },
+    { clave: 'Radio', etiqueta: t('menuRadio'), icono: 'radio' },
   ];
   const inicial = usuario?.nombre?.charAt(0)?.toUpperCase() || '?';
   const [cuentaAbierta, setCuentaAbierta] = useState(false);
@@ -180,7 +181,7 @@ export default function MenuLateral({ visible, onCerrar, pantallaActiva, onSelec
             {vista === 'principal' && (
               <>
                 <View style={estilos.marcaHeader}>
-                  <View style={estilos.marcaIcono} />
+                  <Image source={require('../../assets/logo.png')} style={estilos.marcaLogo} resizeMode="contain" />
                   <Text style={estilos.marcaTexto}>GOKRON</Text>
                 </View>
 
@@ -207,9 +208,6 @@ export default function MenuLateral({ visible, onCerrar, pantallaActiva, onSelec
                       color="rgba(255,255,255,0.5)"
                     />
                   </View>
-                  {usuario?.empresaNombre ? (
-                    <Text style={estilos.empresa}>{usuario.empresaNombre}</Text>
-                  ) : null}
                 </TouchableOpacity>
 
                 {cuentaAbierta && (
@@ -299,13 +297,7 @@ const estilos = StyleSheet.create({
     paddingHorizontal: espaciado.lg,
     paddingVertical: espaciado.md,
   },
-  marcaIcono: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: colores.menta,
-    marginRight: 8,
-  },
+  marcaLogo: { width: 20, height: 28, marginRight: 10 },
   marcaTexto: { color: colores.blanco, fontSize: 13, fontWeight: '700', letterSpacing: 1.5 },
   perfil: {
     padding: espaciado.lg,
@@ -328,7 +320,6 @@ const estilos = StyleSheet.create({
   perfilTextos: { flex: 1 },
   nombre: { color: colores.blanco, fontSize: 16, fontWeight: '700' },
   rol: { color: 'rgba(255,255,255,0.5)', fontSize: 12, marginTop: 2 },
-  empresa: { color: colores.menta, fontSize: 12, marginTop: 10, fontWeight: '600' },
   cuentaLista: {
     backgroundColor: 'rgba(0,0,0,0.2)',
     paddingVertical: 6,

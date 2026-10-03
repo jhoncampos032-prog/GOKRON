@@ -54,6 +54,13 @@ model Empresa {
   googleDriveConectado    Boolean @default(false)
   createdAt     DateTime @default(now())
 
+  ruc           String?
+  direccion     String?
+  ciudad        String?
+  telefono      String?
+  emailContacto String?
+  sitioWeb      String?
+
   usuarios      Usuario[]
   obras         Obra[]
   materiales    Material[]
@@ -72,6 +79,9 @@ model Usuario {
   activo        Boolean  @default(true)
   fotoUrl       String?
   createdAt     DateTime @default(now())
+
+  resetToken       String?
+  resetTokenExpira  DateTime?
 
   asistencias   Asistencia[]  @relation("AsistenciaTrabajador")
   asistenciasComoEncargado Asistencia[] @relation("AsistenciaEncargado")

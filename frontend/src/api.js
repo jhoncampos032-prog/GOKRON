@@ -1,7 +1,7 @@
 // Cliente central de la API. Todas las páginas pasan por aquí,
 // así que cambiar la URL del backend o el manejo de auth se hace en un solo lugar.
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'https://gokron-backend.onrender.com/api';
 
 function getToken() {
   return localStorage.getItem('token');
@@ -28,6 +28,9 @@ async function request(path, { method = 'GET', body } = {}) {
 export const api = {
   login: (email, password) => request('/auth/login', { method: 'POST', body: { email, password } }),
   registroEmpresa: (payload) => request('/auth/registro-empresa', { method: 'POST', body: payload }),
+  olvidePassword: (email) => request('/auth/olvide-password', { method: 'POST', body: { email } }),
+  restablecerPassword: (token, passwordNueva) =>
+    request('/auth/restablecer-password', { method: 'POST', body: { token, passwordNueva } }),
 
   listarObras: () => request('/obras'),
   crearObra: (payload) => request('/obras', { method: 'POST', body: payload }),
@@ -57,6 +60,8 @@ export const api = {
   historialHerramienta: (id) => request(`/herramientas/${id}/historial`),
   actualizarFotoHerramienta: (id, fotoUrl) => request(`/herramientas/${id}/foto`, { method: 'PATCH', body: { fotoUrl } }),
 
+  obtenerEmpresa: () => request('/empresa'),
+  actualizarEmpresa: (datos) => request('/empresa', { method: 'PATCH', body: datos }),
   obtenerReporte: (periodo) => request(`/reportes?periodo=${periodo}`),
   guardarFrecuenciaReporte: (frecuencia) => request('/reportes/frecuencia', { method: 'PATCH', body: { frecuencia } }),
   descargarReporteExcel: async (periodo) => {

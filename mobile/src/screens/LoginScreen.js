@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform, Modal, Linking } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform, Modal, Linking, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import { useIdioma } from '../context/LanguageContext';
 import { colores, espaciado } from '../theme';
+import { api } from '../api/cliente';
 
 // Contacto de soporte: deja aqui el correo y/o telefono reales cuando los
 // tengas listos. Si se dejan vacios, el boton de ayuda avisa que el
@@ -23,6 +24,10 @@ export default function LoginScreen() {
   const [error, setError] = useState('');
   const [cargando, setCargando] = useState(false);
   const [ayudaVisible, setAyudaVisible] = useState(false);
+  const [recuperarVisible, setRecuperarVisible] = useState(false);
+  const [correoRecuperar, setCorreoRecuperar] = useState('');
+  const [enviandoRecuperar, setEnviandoRecuperar] = useState(false);
+  const [recuperarEnviado, setRecuperarEnviado] = useState(false);
 
   async function manejarIngreso() {
     setError('');
@@ -33,6 +38,28 @@ export default function LoginScreen() {
       setError(err.message);
     } finally {
       setCargando(false);
+    }
+  }
+
+  function abrirRecuperar() {
+    setCorreoRecuperar(email);
+    setRecuperarEnviado(false);
+    setRecuperarVisible(true);
+  }
+
+  async function manejarRecuperar() {
+    setEnviandoRecuperar(true);
+    try {
+      // El backend siempre responde igual (exista o no ese correo), asi que
+      // llegar aqui sin error ya es el resultado final -- un error real aqui
+      // es de conexion/servidor, no de "ese correo no existe".
+      await api.olvidePassword(correoRecuperar);
+      setRecuperarEnviado(true);
+    } catch (err) {
+      setError(err.message);
+      setRecuperarVisible(false);
+    } finally {
+      setEnviandoRecuperar(false);
     }
   }
 
@@ -50,7 +77,10 @@ export default function LoginScreen() {
       >
       <View style={estilos.franja} />
       <View style={estilos.centro}>
-        <Text style={estilos.marca}>{t('loginMarca')}</Text>
+        <View style={estilos.marcaFila}>
+          <Image source={require('../../assets/logo.png')} style={estilos.marcaLogo} resizeMode="contain" />
+          <Text style={estilos.marca}>{t('loginMarca')}</Text>
+        </View>
         <Text style={estilos.titulo}>{t('loginTitulo')}</Text>
 
         {error ? <Text style={estilos.error}>{error}</Text> : null}
@@ -80,6 +110,10 @@ export default function LoginScreen() {
           ) : (
             <Text style={estilos.botonTexto}>{t('loginBoton')}</Text>
           )}
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={abrirRecuperar} style={estilos.olvideContrasena}>
+          <Text style={estilos.olvideContrasenaTexto}>{t('loginOlvideContrasena')}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => elegirIdioma(idioma === 'es' ? 'en' : 'es')} style={estilos.cambiarIdioma}>
@@ -131,6 +165,50 @@ export default function LoginScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Panel de "olvidé mi contraseña": se abre desde el enlace debajo del boton de ingresar */}
+      <Modal visible={recuperarVisible} animationType="slide" transparent onRequestClose={() => setRecuperarVisible(false)}>
+        <View style={estilos.ayudaFondo}>
+          <View style={estilos.ayudaPanel}>
+            <View style={estilos.ayudaHeader}>
+              <Ionicons name="key-outline" size={22} color={colores.grafito} />
+              <Text style={estilos.ayudaTitulo}>{t('loginRecuperarTitulo')}</Text>
+            </View>
+
+            {recuperarEnviado ? (
+              <Text style={estilos.ayudaVacio}>{t('loginRecuperarExito')}</Text>
+            ) : (
+              <>
+                <Text style={estilos.ayudaVacio}>{t('loginRecuperarDescripcion')}</Text>
+                <TextInput
+                  style={[estilos.input, { marginTop: espaciado.md, color: colores.grafito, backgroundColor: 'rgba(0,0,0,0.05)' }]}
+                  value={correoRecuperar}
+                  onChangeText={setCorreoRecuperar}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                  placeholder="tu@empresa.com"
+                  placeholderTextColor="rgba(0,0,0,0.35)"
+                />
+                <TouchableOpacity
+                  style={[estilos.boton, { marginTop: espaciado.lg }]}
+                  onPress={manejarRecuperar}
+                  disabled={enviandoRecuperar || !correoRecuperar}
+                >
+                  {enviandoRecuperar ? (
+                    <ActivityIndicator color={colores.grafito} />
+                  ) : (
+                    <Text style={estilos.botonTexto}>{t('loginRecuperarEnviar')}</Text>
+                  )}
+                </TouchableOpacity>
+              </>
+            )}
+
+            <TouchableOpacity style={estilos.ayudaCerrar} onPress={() => setRecuperarVisible(false)}>
+              <Text style={estilos.ayudaCerrarTexto}>{t('loginRecuperarCerrar')}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -151,7 +229,9 @@ const estilos = StyleSheet.create({
     justifyContent: 'center',
   },
   centro: { flex: 1, justifyContent: 'center', paddingHorizontal: espaciado.xl },
-  marca: { color: colores.menta, fontSize: 14, fontWeight: '700', letterSpacing: 2, marginBottom: 16 },
+  marcaFila: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
+  marcaLogo: { width: 22, height: 30, marginRight: 10 },
+  marca: { color: colores.menta, fontSize: 14, fontWeight: '700', letterSpacing: 2 },
   titulo: { color: colores.blanco, fontSize: 26, fontWeight: '700', marginBottom: 24 },
   etiqueta: { color: 'rgba(255,255,255,0.6)', fontSize: 13, marginBottom: 6, marginTop: 14 },
   input: {
@@ -170,7 +250,9 @@ const estilos = StyleSheet.create({
   },
   botonTexto: { color: colores.grafito, fontWeight: '700', fontSize: 16 },
   error: { color: '#F5A9A0', marginBottom: 8, fontSize: 13 },
-  cambiarIdioma: { marginTop: espaciado.lg, alignItems: 'center' },
+  olvideContrasena: { marginTop: espaciado.lg, alignItems: 'center' },
+  olvideContrasenaTexto: { color: colores.menta, fontSize: 13, fontWeight: '600' },
+  cambiarIdioma: { marginTop: espaciado.md, alignItems: 'center' },
   cambiarIdiomaTexto: { color: 'rgba(255,255,255,0.5)', fontSize: 13 },
 
   ayudaFondo: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },

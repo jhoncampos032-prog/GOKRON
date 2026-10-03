@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
+import Logo from '../components/Logo.jsx';
 
 export default function RegistroEmpresa() {
   const navigate = useNavigate();
@@ -33,7 +34,7 @@ export default function RegistroEmpresa() {
         <div className="franja-precaucion" />
         <div className="login-centro">
           <div className="login-tarjeta">
-            <div className="login-marca">Gokron</div>
+            <div className="login-marca"><Logo altura={22} variante="oscuro" />Gokron</div>
             <h1 className="login-titulo">Empresa registrada</h1>
             <p style={{ color: 'var(--texto-secundario)', marginBottom: 20, lineHeight: 1.5 }}>
               Ya puedes iniciar sesión con el correo y la contraseña que acabas de crear.
@@ -52,7 +53,7 @@ export default function RegistroEmpresa() {
       <div className="franja-precaucion" />
       <div className="login-centro">
         <div className="login-tarjeta">
-          <div className="login-marca">Gokron</div>
+          <div className="login-marca"><Logo altura={22} variante="oscuro" />Gokron</div>
           <h1 className="login-titulo">Registra tu empresa</h1>
 
           {error && <div className="error-texto">{error}</div>}
