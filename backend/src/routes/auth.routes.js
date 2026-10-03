@@ -114,7 +114,12 @@ router.post('/olvide-password', async (req, res) => {
     });
 
     const enlace = `${process.env.FRONTEND_URL}/restablecer-password?token=${token}`;
-    await enviarCorreoRecuperacion(usuario.email, usuario.nombre, enlace);
+    // El correo se envia sin esperar su resultado: asi la respuesta es igual
+    // de rapida exista o no el usuario (no se puede adivinar quien esta
+    // registrado) y un servidor de correo lento no deja la peticion colgada.
+    enviarCorreoRecuperacion(usuario.email, usuario.nombre, enlace).catch((err) => {
+      console.error('No se pudo enviar el correo de recuperación:', err.message);
+    });
 
     res.json(mensaje);
   } catch (err) {

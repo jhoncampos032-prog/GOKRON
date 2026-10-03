@@ -5,6 +5,11 @@ const nodemailer = require('nodemailer');
 // nunca para leer nada. Las credenciales viven solo en el .env del servidor.
 const transportador = nodemailer.createTransport({
   service: 'gmail',
+  // Si el servidor no deja salir por SMTP (pasa en planes gratis como el de
+  // Render), falla rapido en vez de quedarse esperando minutos.
+  connectionTimeout: 10000,
+  greetingTimeout: 10000,
+  socketTimeout: 15000,
   auth: {
     user: process.env.GMAIL_USER,
     pass: process.env.GMAIL_APP_PASSWORD,
